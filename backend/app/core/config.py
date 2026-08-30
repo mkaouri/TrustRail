@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     test_database_url: str | None = Field(default=None, validation_alias="TEST_DATABASE_URL")
     db_echo: bool = False
 
+    # OPA policy engine. URL uses a plain env name; timeout is a strict fail-closed cap.
+    opa_url: str | None = Field(default=None, validation_alias="OPA_URL")
+    opa_timeout_seconds: float = 2.0
+
 
 @lru_cache
 def get_settings() -> Settings:

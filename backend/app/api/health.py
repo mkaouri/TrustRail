@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.database import get_session
+from app.policy.opa_client import get_policy_evaluator
 
 logger = logging.getLogger("trustrail.health")
 
@@ -33,10 +34,21 @@ async def health() -> HealthResponse:
 
 @router.get("/health/ready")
 async def readiness(session: Annotated[AsyncSession, Depends(get_session)]) -> JSONResponse:
+    db_ok = True
     try:
         await session.execute(text("SELECT 1"))
     except Exception:
-        # Never leak connection details or credentials to the caller.
+        db_ok = False
         logger.warning("Readiness check failed: database unavailable.")
-        return JSONResponse(status_code=503, content={"status": "unavailable"})
-    return JSONResponse(status_code=200, content={"status": "ready"})
+
+    opa_ok = await get_policy_evaluator().health_check()
+    if not opa_ok:
+        logger.warning("Readiness check failed: OPA unavailable.")
+
+    if db_ok and opa_ok:
+        return JSONResponse(status_code=200, content={"status": "ready"})
+    # Report which dependency is down without leaking connection details.
+    return JSONResponse(
+        status_code=503,
+        content={"status": "unavailable", "database": db_ok, "opa": opa_ok},
+    )

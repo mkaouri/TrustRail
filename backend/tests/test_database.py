@@ -19,7 +19,10 @@ async def test_database_connectivity(db_session: AsyncSession) -> None:
 
 
 @pytest.mark.db
+@pytest.mark.opa
 async def test_readiness_endpoint_ok(db_client: AsyncClient) -> None:
+    if not os.environ.get("OPA_URL"):
+        pytest.skip("OPA_URL not set; readiness requires OPA.")
     response = await db_client.get("/health/ready")
     assert response.status_code == 200
     assert response.json() == {"status": "ready"}

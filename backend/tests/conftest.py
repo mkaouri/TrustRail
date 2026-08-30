@@ -15,6 +15,17 @@ def app():
     return create_app()
 
 
+@pytest.fixture(autouse=True)
+def _reset_opa_client_singleton():
+    # The shared OPA client is bound to an event loop; pytest-asyncio uses a fresh
+    # loop per test, so reset the singleton around each test to avoid cross-loop reuse.
+    import app.policy.opa_client as opa_client
+
+    opa_client._client = None
+    yield
+    opa_client._client = None
+
+
 @pytest_asyncio.fixture
 async def client(app) -> AsyncIterator[AsyncClient]:
     transport = ASGITransport(app=app)

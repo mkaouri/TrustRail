@@ -25,6 +25,22 @@ services:
       timeout: 5s
       retries: 5
 
+  opa:
+    image: openpolicyagent/opa:1.0.0-static
+    command:
+      - "run"
+      - "--server"
+      - "--addr=0.0.0.0:8181"
+      - "--log-level=info"
+      - "/policies"
+    volumes:
+      - ./policies:/policies:ro
+    networks:
+      - trustrail
+    # Loopback only: reachable by the host-run backend/tests, never publicly exposed.
+    ports:
+      - "127.0.0.1:8181:8181"
+
 volumes:
   postgres_data:
 

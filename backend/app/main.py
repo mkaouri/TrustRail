@@ -10,6 +10,7 @@ from app.core.database import check_connection, dispose_engine
 from app.core.errors import register_exception_handlers
 from app.core.logging import configure_logging
 from app.core.request_id import RequestIDMiddleware
+from app.policy.opa_client import dispose_opa_client
 
 logger = logging.getLogger("trustrail.lifespan")
 
@@ -26,6 +27,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         yield
     finally:
         await dispose_engine()
+        await dispose_opa_client()
 
 
 def create_app() -> FastAPI:
