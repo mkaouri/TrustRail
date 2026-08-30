@@ -6,9 +6,9 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.core.config import get_settings
-from app.models.base import Base
+from app.models import Base
 
-# Import model modules here as they are added so their tables register on Base.metadata.
+# Importing app.models registers all model tables on Base.metadata for autogenerate.
 
 config = context.config
 

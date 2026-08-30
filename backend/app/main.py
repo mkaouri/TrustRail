@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api.health import router as health_router
+from app.api.v1.organizations import router as organizations_router
 from app.core.config import get_settings
 from app.core.database import check_connection, dispose_engine
 from app.core.errors import register_exception_handlers
@@ -43,6 +44,7 @@ def create_app() -> FastAPI:
     app.add_middleware(RequestIDMiddleware)
     register_exception_handlers(app)
     app.include_router(health_router)
+    app.include_router(organizations_router)
 
     return app
 

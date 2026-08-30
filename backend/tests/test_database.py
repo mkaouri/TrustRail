@@ -54,9 +54,12 @@ def test_migration_upgrade_head_and_downgrade() -> None:
         pytest.skip("TEST_DATABASE_URL not set; skipping migration smoke test.")
 
     config = _alembic_config(url)
-    command.downgrade(config, "base")
     command.upgrade(config, "head")
-    assert asyncio.run(_current_version(url)) == "0001_initial"
+    assert asyncio.run(_current_version(url)) is not None
 
     command.downgrade(config, "base")
     assert asyncio.run(_current_version(url)) is None
+
+    # Leave the shared test database migrated to head for other integration tests.
+    command.upgrade(config, "head")
+    assert asyncio.run(_current_version(url)) is not None

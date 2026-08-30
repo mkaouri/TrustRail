@@ -1,13 +1,30 @@
 import os
 from collections.abc import AsyncIterator
+from pathlib import Path
 
 import pytest
 import pytest_asyncio
+from alembic import command
+from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from app.core.database import get_session
 from app.main import create_app
+
+_BACKEND_DIR = Path(__file__).resolve().parents[1]
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _ensure_test_schema() -> None:
+    # Migrate the test database to head once so integration tests see the schema.
+    url = os.environ.get("TEST_DATABASE_URL")
+    if not url:
+        return
+    config = Config(str(_BACKEND_DIR / "alembic.ini"))
+    config.set_main_option("script_location", str(_BACKEND_DIR / "migrations"))
+    config.set_main_option("sqlalchemy.url", url)
+    command.upgrade(config, "head")
 
 
 @pytest.fixture

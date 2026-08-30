@@ -7,6 +7,10 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.responses import JSONResponse
 
 from app.core.request_id import get_request_id
+from app.services.errors import (
+    OrganizationNotFoundError,
+    OrganizationSlugConflictError,
+)
 
 logger = logging.getLogger("trustrail.errors")
 
@@ -19,6 +23,22 @@ def _envelope(code: str, message: str) -> dict[str, Any]:
             "request_id": get_request_id(),
         }
     }
+
+
+async def _not_found_handler(_request: Request, _exc: Exception) -> JSONResponse:
+    return JSONResponse(
+        status_code=404,
+        content=_envelope("ORGANIZATION_NOT_FOUND", "The organization could not be found."),
+    )
+
+
+async def _slug_conflict_handler(_request: Request, _exc: Exception) -> JSONResponse:
+    return JSONResponse(
+        status_code=409,
+        content=_envelope(
+            "ORGANIZATION_SLUG_CONFLICT", "An organization with this slug already exists."
+        ),
+    )
 
 
 async def _validation_handler(_request: Request, _exc: Exception) -> JSONResponse:
@@ -47,5 +67,7 @@ async def _unhandled_exception_handler(_request: Request, exc: Exception) -> JSO
 
 def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(RequestValidationError, _validation_handler)
+    app.add_exception_handler(OrganizationNotFoundError, _not_found_handler)
+    app.add_exception_handler(OrganizationSlugConflictError, _slug_conflict_handler)
     app.add_exception_handler(StarletteHTTPException, _http_exception_handler)
     app.add_exception_handler(Exception, _unhandled_exception_handler)

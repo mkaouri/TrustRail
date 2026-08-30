@@ -1,5 +1,7 @@
-from sqlalchemy import MetaData
-from sqlalchemy.orm import DeclarativeBase
+from datetime import UTC, datetime
+
+from sqlalchemy import DateTime, MetaData
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 # Deterministic constraint names keep future Alembic autogenerate output stable.
 NAMING_CONVENTION = {
@@ -15,3 +17,19 @@ class Base(DeclarativeBase):
     """Declarative base owning the metadata that Alembic targets."""
 
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
+
+
+class TimestampMixin:
+    """Reusable timezone-aware UTC created_at/updated_at columns."""
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
