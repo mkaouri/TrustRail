@@ -1,0 +1,33 @@
+# TrustRail local development stack.
+#
+# Services are added incrementally by milestones. Credentials come from .env
+# (see .env.example); no secrets are hardcoded here.
+#   Milestone 2 -> PostgreSQL
+#   Milestone 3 -> OPA (internal network, not publicly exposed)
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/scripts/db/init-test-db.sql:/docker-entrypoint-initdb.d/10-init-test-db.sql:ro
+    networks:
+      - trustrail
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+
+networks:
+  trustrail:
+    driver: bridge
